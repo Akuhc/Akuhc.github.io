@@ -1,1 +1,35 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Test połączenia z API</title>
+</head>
+<body>
+  <h1>Test połączenia z backendem</h1>
+
+  <button id="pingBtn">Wyślij ping</button>
+  <p id="result"></p>
+
+  <script>
+    const API_URL = 'https://api.czwalga.me/ping'; // <- tu Twój endpoint
+
+    document.getElementById('pingBtn').addEventListener('click', async () => {
+      const result = document.getElementById('result');
+      result.textContent = 'Łączenie...';
+
+      try {
+        const res = await fetch(API_URL);
+        if (!res.ok) {
+          result.textContent = 'Błąd HTTP: ' + res.status;
+          return;
+        }
+        const data = await res.json();
+        result.textContent = 'Odpowiedź API: ' + JSON.stringify(data);
+      } catch (err) {
+        result.textContent = 'Błąd połączenia: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
 
