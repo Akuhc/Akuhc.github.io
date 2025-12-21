@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Czwalga - Login</title>
+    <title>Czwalga</title>
 </head>
 <body>
-    <h1>Czwalga</h1>
-    <button id="loginBtn">Login z Discord</button>
+    <h1>Czwalga Login</h1>
+    <button onclick="openOAuth()">Login z Discord</button>
     
     <script>
-        document.getElementById("loginBtn").addEventListener("click", () => {
-            // To będzie pracować (HTTPS nawet ze self-signed cert)
-            window.location.href = "https://de1.bot-hosting.net:22425/oauth/login";
-        });
+        function openOAuth() {
+            // Otwiera nowy tab - użytkownik będzie musiał zaakceptować warning
+            window.open(
+                "https://de1.bot-hosting.net:22425/oauth/login",
+                "_blank"
+            );
+        }
     </script>
 </body>
 </html>
