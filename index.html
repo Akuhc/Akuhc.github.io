@@ -1,101 +1,44 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Czwalga</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container { max-width: 1200px; margin: 0 auto; }
-        header { text-align: center; color: white; margin-bottom: 40px; }
-        header h1 { font-size: 3em; margin-bottom: 10px; }
-        header p { font-size: 1.2em; opacity: 0.9; }
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-bottom: 30px;
-        }
-        .login-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 1.1em;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-        .hidden { display: none; }
-        #user-info { color: #333; }
-        #user-info h2 { margin-bottom: 10px; }
-        .balance { font-size: 1.5em; color: #667eea; font-weight: bold; }
-        footer { text-align: center; color: white; padding: 20px; opacity: 0.8; }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Panel bota</title>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>💰 Czwalga</h1>
-            <p>Sklep z walutą wirtualną</p>
-        </header>
+  <h1>Panel bota</h1>
 
-        <div id="login-section" class="card">
-            <h2>👋 Zaloguj się!</h2>
-            <p style="margin: 20px 0; color: #666;">
-                Aby zobczyć swój balans, zaloguj się na Discordzie i użyj komend: !praca !balans !ranking
-            </p>
-            <button class="login-btn" onclick="alert('Zaloguj się na Discordzie: !login')">
-                🔐 Instrukcja Logowania
-            </button>
-        </div>
+  <input id="msg" placeholder="Wiadomość" />
+  <button id="send">Wyślij</button>
 
-        <div id="user-section" class="card hidden">
-            <div id="user-info">
-                <h2 id="username">Ładowanie...</h2>
-                <p>Twój balans:</p>
-                <div class="balance" id="user-balance">0 💰</div>
-                <button class="login-btn" onclick="location.reload()" style="margin-top: 20px;">
-                    🔄 Odśwież
-                </button>
-            </div>
-        </div>
+  <pre id="out"></pre>
 
-        <footer>
-            <p>Czwalga © 2025 🚀</p>
-        </footer>
-    </div>
+  <script>
+    const API_BASE = "https://api.twojadomena.pl"; // <- tu wpiszesz swój backend
+    const API_KEY  = "WKLEJ_TUTAJ_API_KEY";        // lepiej przenieść na backend auth, ale minimalnie działa
 
-    <script>
-        const API_URL = "http://localhost:22425";
-        const urlParams = new URLSearchParams(window.location.search);
-        const userId = urlParams.get("user_id");
+    const out = document.getElementById("out");
+    const msg = document.getElementById("msg");
 
-        async function loadUser() {
-            if (!userId) return;
+    async function api(path, body) {
+      const res = await fetch(API_BASE + path, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": API_KEY
+        },
+        body: JSON.stringify(body)
+      });
+      return res.json();
+    }
 
-            try {
-                const response = await fetch(`${API_URL}/api/balance/${userId}`);
-                const data = await response.json();
-
-                if (data.balance !== undefined) {
-                    document.getElementById("login-section").classList.add("hidden");
-                    document.getElementById("user-section").classList.remove("hidden");
-                    document.getElementById("user-balance").textContent = `${data.balance} 💰`;
-                    document.getElementById("username").textContent = `Użytkownik #${userId}`;
-                }
-            } catch (error) {
-                console.log("API niedostępne (normalne na dev):", error);
-            }
-        }
-
-        loadUser();
-    </script>
+    document.getElementById("send").addEventListener("click", async () => {
+      const data = await api("/api/send", {
+        channel_id: "123456789012345678",
+        content: msg.value
+      });
+      out.textContent = JSON.stringify(data, null, 2);
+    });
+  </script>
 </body>
 </html>
