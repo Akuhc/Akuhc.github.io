@@ -1,21 +1,412 @@
 <!DOCTYPE html>
-<html>
+<html lang="pl">
 <head>
-    <title>Czwalga</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Czwalga - Sklep z Walutą Wirtualną</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding-top: 20px;
+        }
+
+        header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .auth-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+            display: none;
+        }
+
+        .auth-section.show {
+            display: block;
+        }
+
+        .login-btn, .logout-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 10px;
+        }
+
+        .login-btn:hover, .logout-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .user-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .user-card.show {
+            display: block;
+        }
+
+        .user-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 20px;
+        }
+
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid #667eea;
+        }
+
+        .user-info h2 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .balance {
+            font-size: 1.5em;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .balance-display {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .shop-item {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .shop-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .item-emoji {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .item-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .item-price {
+            color: #667eea;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .buy-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        .buy-btn:hover {
+            opacity: 0.9;
+        }
+
+        .buy-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .info-box {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        .discord-link {
+            background: #5865F2;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 10px;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        .discord-link:hover {
+            opacity: 0.9;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            opacity: 0.8;
+        }
+    </style>
 </head>
 <body>
-    <h1>Czwalga Login</h1>
-    <button onclick="openOAuth()">Login z Discord</button>
-    
+    <div class="container">
+        <header>
+            <h1>💰 Czwalga</h1>
+            <p>Sklep z walutą wirtualną • Zarabiaj przy pomocy !praca</p>
+        </header>
+
+        <div id="message" class="message"></div>
+
+        <!-- Sekcja logowania -->
+        <div id="auth-section" class="auth-section">
+            <h2>👋 Witaj w Czwalgę!</h2>
+            <p style="margin: 20px 0; color: #666;">
+                Zaloguj się poprzez Discord aby zobaczyć swój balans i zakupować przedmioty.
+            </p>
+            <button class="login-btn" onclick="loginWithDiscord()">
+                🔐 Zaloguj się przez Discord
+            </button>
+        </div>
+
+        <!-- Karty użytkownika -->
+        <div id="user-card" class="user-card">
+            <div class="user-header">
+                <img id="user-avatar" class="user-avatar" src="" alt="Avatar">
+                <div class="user-info">
+                    <h2 id="user-name">Ładowanie...</h2>
+                    <div class="balance-display">Twój balans:</div>
+                    <div class="balance" id="user-balance">0 💰</div>
+                </div>
+            </div>
+            <button class="logout-btn" onclick="logout()">🚪 Wyloguj się</button>
+        </div>
+
+        <!-- Informacje -->
+        <div class="info-box">
+            <h3>📖 Jak to działa?</h3>
+            <ul>
+                <li>Każdy nowy użytkownik otrzymuje <strong>1000 monet</strong></li>
+                <li>Zarabiaj <strong>500 monet</strong> za każde <strong>!praca</strong> na Discordzie (cooldown 1h)</li>
+                <li>Kupuj przedmioty w sklepie za zarobione monety</li>
+                <li>Monety synchronizują się między Discordem a stroną</li>
+            </ul>
+        </div>
+
+        <!-- Sklep -->
+        <h2 style="color: white; margin-bottom: 30px; text-align: center;">🛍️ Sklep</h2>
+        <div class="shop-grid" id="shop-grid">
+            <!-- Przedmioty będą załadowane tutaj -->
+        </div>
+
+        <footer>
+            <p>Czwalga © 2025 • Zarabiaj i wydawaj na rzeczy, które kochasz! 🚀</p>
+        </footer>
+    </div>
+
     <script>
-        function openOAuth() {
-            // Otwiera nowy tab - użytkownik będzie musiał zaakceptować warning
-            window.open(
-                "https://de1.bot-hosting.net:22425/oauth/login",
-                "_blank"
-            );
+        const API_BASE = "http://localhost:22425";
+
+        // Sprawdź czy zalogowany
+        async function checkLogin() {
+            const params = new URLSearchParams(window.location.search);
+            const loggedIn = params.get("logged_in");
+
+            if (loggedIn === "true") {
+                await loadUserData();
+            } else {
+                document.getElementById("auth-section").classList.add("show");
+            }
         }
+
+        // Zaloguj z Discord
+        function loginWithDiscord() {
+            window.location.href = `${API_BASE}/oauth/login`;
+        }
+
+        // Załaduj dane użytkownika
+        async function loadUserData() {
+            try {
+                const response = await fetch(`${API_BASE}/api/user`, {
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (response.ok) {
+                    const user = await response.json();
+                    document.getElementById("user-name").textContent = user.username;
+                    document.getElementById("user-balance").textContent = `${user.balance} 💰`;
+                    
+                    if (user.avatar_url) {
+                        document.getElementById("user-avatar").src = user.avatar_url;
+                    }
+
+                    document.getElementById("user-card").classList.add("show");
+                    document.getElementById("auth-section").classList.remove("show");
+
+                    loadShop();
+                } else {
+                    document.getElementById("auth-section").classList.add("show");
+                }
+            } catch (error) {
+                console.log("Nie zalogowany:", error);
+                document.getElementById("auth-section").classList.add("show");
+            }
+        }
+
+        // Załaduj sklep
+        async function loadShop() {
+            const items = [
+                { id: 1, name: "Świecą 🕯️", price: 100, emoji: "🕯️", desc: "Piękna świeca" },
+                { id: 2, name: "Kwiaty 🌹", price: 250, emoji: "🌹", desc: "Piękny bukiet kwiatów" },
+                { id: 3, name: "Czapka 🎩", price: 500, emoji: "🎩", desc: "Stylowa czapka" },
+                { id: 4, name: "Diament 💎", price: 1000, emoji: "💎", desc: "Luksusowy diament" },
+                { id: 5, name: "Korona 👑", price: 2000, emoji: "👑", desc: "Królewska korona" },
+                { id: 6, name: "Samolot 🛩️", price: 5000, emoji: "🛩️", desc: "Prywatny samolot" }
+            ];
+
+            let html = "";
+            for (let item of items) {
+                html += `
+                    <div class="shop-item">
+                        <div class="item-emoji">${item.emoji}</div>
+                        <div class="item-name">${item.name}</div>
+                        <div style="color: #999; margin-bottom: 15px; font-size: 0.9em;">${item.desc}</div>
+                        <div class="item-price">${item.price} 💰</div>
+                        <button class="buy-btn" onclick="buyItem(${item.id}, '${item.name}', ${item.price})">
+                            🛒 Kup za ${item.price}
+                        </button>
+                    </div>
+                `;
+            }
+            document.getElementById("shop-grid").innerHTML = html;
+        }
+
+        // Kup przedmiot
+        async function buyItem(id, name, price) {
+            showMessage(`✨ Kupiłeś ${name} za ${price} monet!`, "success");
+            // TODO: Implementacja kupowania
+        }
+
+        // Wyloguj
+        async function logout() {
+            await fetch(`${API_BASE}/oauth/logout`, {
+                method: "POST",
+                credentials: "include"
+            });
+            location.reload();
+        }
+
+        // Pokaż wiadomość
+        function showMessage(text, type) {
+            const msg = document.getElementById("message");
+            msg.textContent = text;
+            msg.className = `message show ${type}`;
+            setTimeout(() => msg.classList.remove("show"), 5000);
+        }
+
+        // Start
+        checkLogin();
     </script>
 </body>
 </html>
-
