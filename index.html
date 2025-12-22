@@ -1,44 +1,225 @@
+
 <!doctype html>
 <html lang="pl">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Panel bota</title>
+  <title>czwalga.me</title>
+  <style>
+    :root{
+      --bg:#0a0a0b; --card:#131316; --text:#f0f0f2; --muted:#9a9aa8;
+      --border:rgba(255,255,255,.09); --accent:#ffffff; --accentText:#0a0a0b;
+      --red:#ff6b6b;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0; min-height:100vh; display:grid; place-items:center;
+      background:linear-gradient(135deg, #0a0a0b 0%, #131316 100%);
+      color:var(--text);
+      font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    }
+    .card{
+      width:min(420px,90vw);
+      border:1px solid var(--border);
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.01));
+      backdrop-filter:blur(10px);
+      border-radius:20px;
+      padding:32px;
+      box-shadow:0 25px 50px rgba(0,0,0,.6);
+    }
+    h1{margin:0 0 8px; font-size:24px; letter-spacing:-.3px; font-weight:600}
+    .subtitle{color:var(--muted); margin:0 0 28px; font-size:14px}
+    .form-group{margin-bottom:18px}
+    label{display:block; margin-bottom:8px; font-size:13px; font-weight:550; color:var(--text)}
+    input[type="text"]{
+      appearance:none; width:100%; padding:10px 12px;
+      border:1px solid var(--border); background:rgba(0,0,0,.2);
+      color:var(--text); border-radius:10px; font:inherit;
+      transition:all 150ms;
+    }
+    input[type="text"]:focus{
+      outline:none; border-color:var(--accent); background:rgba(0,0,0,.3);
+      box-shadow:0 0 0 3px rgba(255,255,255,.08);
+    }
+    .buttons{display:flex; gap:10px; flex-wrap:wrap; margin-top:24px}
+    button, a.btn{
+      appearance:none; border:none; padding:10px 16px; border-radius:10px;
+      cursor:pointer; text-decoration:none; font-size:14px; font-weight:600;
+      transition:all 150ms; text-align:center; display:inline-block;
+    }
+    .primary{
+      background:var(--accent); color:var(--accentText); flex:1; min-width:120px;
+    }
+    .primary:hover{transform:translateY(-1px); box-shadow:0 8px 16px rgba(255,255,255,.15)}
+    .primary:active{transform:translateY(0)}
+    .secondary{
+      background:transparent; color:var(--text); border:1px solid var(--border);
+      flex:1; min-width:120px;
+    }
+    .secondary:hover{background:rgba(255,255,255,.05); border-color:var(--accent)}
+    .danger{background:var(--red); color:#fff}
+    .user-panel{
+      margin-top:24px; padding-top:24px; border-top:1px solid var(--border);
+    }
+    .user-info{display:flex; gap:12px; align-items:center; margin-bottom:16px}
+    .avatar{width:36px; height:36px; border-radius:50%; background:var(--border)}
+    .user-details{flex:1}
+    .user-name{font-weight:600; color:var(--text); margin-bottom:2px}
+    .user-id{color:var(--muted); font-size:12px}
+    .settings{background:rgba(0,0,0,.15); border:1px solid var(--border); border-radius:12px; padding:16px; margin-top:16px}
+    .error{color:var(--red); font-size:13px; margin-top:8px; display:none}
+    .hidden{display:none}
+    .spinner{
+      display:inline-block; width:14px; height:14px;
+      border:2px solid rgba(255,255,255,.2); border-top-color:var(--accent);
+      border-radius:50%; animation:spin 600ms linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
 </head>
 <body>
-  <h1>Panel bota</h1>
+  <main class="card">
+    <div id="loginForm">
+      <h1>czwalga.me</h1>
+      <p class="subtitle">Zaloguj się Discordem</p>
+      
+      <form id="mcForm">
+        <div class="form-group">
+          <label for="mcName">Nick Minecraft</label>
+          <input type="text" id="mcName" placeholder="np. graczxD" maxlength="16" required>
+          <div class="error" id="mcError"></div>
+        </div>
+      </form>
 
-  <input id="msg" placeholder="Wiadomość" />
-  <button id="send">Wyślij</button>
+      <div class="buttons">
+        <a class="btn primary" id="loginBtn" href="#">Zaloguj Discord</a>
+      </div>
+    </div>
 
-  <pre id="out"></pre>
+    <div id="userPanel" class="hidden">
+      <h1>Panel</h1>
+      <p class="subtitle">Zalogowany</p>
+
+      <div class="user-info">
+        <img class="avatar" id="avatar" alt="">
+        <div class="user-details">
+          <div class="user-name" id="userName"></div>
+          <div class="user-id" id="userId"></div>
+        </div>
+      </div>
+
+      <div class="settings">
+        <label for="mcNameEdit">Nick Minecraft</label>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <input type="text" id="mcNameEdit" maxlength="16" style="flex:1">
+          <button class="btn secondary" id="saveBtn" style="flex:0">Zapisz</button>
+        </div>
+        <div class="error" id="saveError"></div>
+      </div>
+
+      <div class="buttons" style="margin-top:20px;">
+        <button class="btn secondary danger" id="logoutBtn">Wyloguj</button>
+      </div>
+    </div>
+  </main>
 
   <script>
-    const API_BASE = "https://api.twojadomena.pl"; // <- tu wpiszesz swój backend
-    const API_KEY  = "WKLEJ_TUTAJ_API_KEY";        // lepiej przenieść na backend auth, ale minimalnie działa
+    const API = "https://api.czwalga.me"; 
+    const discordClientId = "1373774073162633368";
+    const redirectUri = "https://api.czwalga.me/callback";
 
-    const out = document.getElementById("out");
-    const msg = document.getElementById("msg");
-
-    async function api(path, body) {
-      const res = await fetch(API_BASE + path, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": API_KEY
-        },
-        body: JSON.stringify(body)
+    async function api(path, opts = {}) {
+      const res = await fetch(API + path, {
+        credentials: "include",
+        headers: { "Content-Type": "application/json", ...opts.headers },
+        ...opts
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `${res.status} ${res.statusText}`);
+      }
       return res.json();
     }
 
-    document.getElementById("send").addEventListener("click", async () => {
-      const data = await api("/api/send", {
-        channel_id: "123456789012345678",
-        content: msg.value
-      });
-      out.textContent = JSON.stringify(data, null, 2);
+    async function refresh() {
+      try {
+        const me = await api("/oauth/me");
+        showUserPanel(me);
+      } catch (e) {
+        showLoginForm();
+      }
+    }
+
+    function showLoginForm() {
+      document.getElementById("loginForm").classList.remove("hidden");
+      document.getElementById("userPanel").classList.add("hidden");
+      updateLoginBtn();
+    }
+
+    function showUserPanel(user) {
+      document.getElementById("loginForm").classList.add("hidden");
+      document.getElementById("userPanel").classList.remove("hidden");
+      document.getElementById("userName").textContent = user.username;
+      document.getElementById("userId").textContent = `ID: ${user.id}`;
+      document.getElementById("avatar").src = user.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23888'/%3E%3C/svg%3E";
+      document.getElementById("mcNameEdit").value = user.minecraft_name || "";
+    }
+
+    function updateLoginBtn() {
+      const mcName = document.getElementById("mcName").value.trim();
+      const btn = document.getElementById("loginBtn");
+      if (!mcName) {
+        btn.href = "#";
+        btn.style.pointerEvents = "none";
+        btn.style.opacity = "0.5";
+        btn.textContent = "Wpisz nick Minecraft";
+      } else {
+        const state = btoa(JSON.stringify({ mc_name: mcName }));
+        const url = new URL("https://discord.com/api/oauth2/authorize");
+        url.searchParams.set("client_id", discordClientId);
+        url.searchParams.set("response_type", "code");
+        url.searchParams.set("redirect_uri", redirectUri);
+        url.searchParams.set("scope", "identify");
+        url.searchParams.set("state", state);
+        btn.href = url.toString();
+        btn.style.pointerEvents = "auto";
+        btn.style.opacity = "1";
+        btn.textContent = "Zaloguj Discord";
+      }
+    }
+
+    document.getElementById("mcName").addEventListener("input", updateLoginBtn);
+
+    document.getElementById("saveBtn").addEventListener("click", async () => {
+      const mcName = document.getElementById("mcNameEdit").value.trim();
+      const saveError = document.getElementById("saveError");
+      saveError.style.display = "none";
+      const btn = document.getElementById("saveBtn");
+      const orig = btn.textContent;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+      try {
+        await api("/oauth/me", {
+          method: "PATCH",
+          body: JSON.stringify({ minecraft_name: mcName })
+        });
+        btn.textContent = "✓ Zapisano";
+        setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2000);
+      } catch (e) {
+        saveError.textContent = e.message;
+        saveError.style.display = "block";
+        btn.textContent = orig;
+        btn.disabled = false;
+      }
     });
+
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await fetch(API + "/oauth/logout", { method: "POST", credentials: "include" });
+      refresh();
+    });
+
+    refresh();
   </script>
 </body>
 </html>
