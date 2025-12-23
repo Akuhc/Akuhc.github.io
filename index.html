@@ -1,137 +1,111 @@
-from flask import Flask, render_template_string, jsonify
-from flask_cors import CORS
-import os
-from datetime import datetime
-
-app = Flask(__name__)
-CORS(app)  # Włącz CORS aby GitHub Pages mogła się komunikować
-
-# WAŻNE: Ustaw swoją domenę z GitHub Pages tutaj lub w zmiennej środowiskowej
-GITHUB_PAGES_DOMAIN = os.getenv('GITHUB_PAGES_DOMAIN', 'https://czwalga.me')  # Zmień na swoją domenę
-
-HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bot Dashboard</title>
+    <title>Bot Dashboard - GitHub Pages</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             padding: 20px;
         }
         .container {
             background: white;
             border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             padding: 40px;
-            max-width: 700px;
+            max-width: 600px;
             width: 100%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
-        h1 {
-            color: #667eea;
-            margin-bottom: 10px;
-            font-size: 32px;
-        }
-        .subtitle {
-            color: #999;
-            font-size: 14px;
-            margin-bottom: 30px;
-        }
+        h1 { color: #667eea; margin-bottom: 10px; font-size: 28px; }
+        .subtitle { color: #999; margin-bottom: 30px; font-size: 14px; }
+        
         .status-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
-            margin: 25px 0;
+            margin: 30px 0;
         }
         .status-card {
             background: #f8f9fa;
-            padding: 15px;
+            padding: 20px;
             border-radius: 8px;
             border-left: 4px solid #667eea;
+            text-align: center;
+            transition: all 0.3s ease;
         }
         .status-card.online {
             border-left-color: #10b981;
             background: #f0fdf4;
         }
-        .status-card h3 {
+        .status-card.offline {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+        .status-label {
             font-size: 12px;
             color: #999;
-            margin-bottom: 8px;
             text-transform: uppercase;
+            margin-bottom: 10px;
         }
-        .status-card .value {
-            font-size: 18px;
+        .status-value {
+            font-size: 28px;
             font-weight: bold;
-            color: #333;
+            margin: 10px 0;
         }
-        .indicator {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #10b981;
-            margin-right: 8px;
+        .status-card.online .status-value { color: #10b981; }
+        .status-card.offline .status-value { color: #ef4444; }
+        .loading .status-value { color: #999; animation: pulse 1.5s infinite; }
+        
+        @keyframes pulse { 
+            0%, 100% { opacity: 0.5; } 
+            50% { opacity: 1; } 
+        }
+        
+        .info-box {
+            background: #f0f4ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+            font-size: 13px;
+            color: #666;
+        }
+        .info-box code {
+            background: #fff;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-family: monospace;
+            color: #667eea;
+            word-break: break-all;
         }
         .section {
             margin: 25px 0;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
         }
         .section h2 {
             font-size: 16px;
             color: #333;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             border-bottom: 2px solid #667eea;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
         }
-        .endpoint {
-            background: white;
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 6px;
-            font-family: monospace;
+        .section p {
             font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .section code {
+            background: #f0f4ff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
             color: #667eea;
-            border: 1px solid #e0e0e0;
-            overflow-x: auto;
-            word-break: break-all;
-        }
-        .method {
-            display: inline-block;
-            background: #10b981;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: bold;
-            margin-right: 8px;
-        }
-        .config-box {
-            background: #fff3cd;
-            padding: 15px;
-            border-radius: 6px;
-            border-left: 4px solid #ffc107;
-            margin: 15px 0;
-            font-size: 13px;
-        }
-        .config-box code {
-            background: #fff8e1;
-            padding: 4px 8px;
-            border-radius: 3px;
-            font-family: monospace;
         }
         .footer {
             text-align: center;
@@ -141,133 +115,134 @@ HTML_TEMPLATE = """
             color: #999;
             font-size: 12px;
         }
-        .alert {
-            background: #f0f4ff;
-            padding: 15px;
-            border-radius: 6px;
-            border-left: 4px solid #667eea;
-            margin: 15px 0;
-            font-size: 13px;
-            color: #333;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎯 Discord Bot Dashboard</h1>
-        <p class="subtitle">Status systemów i API endpoints</p>
+        <h1>🤖 Discord Bot Dashboard</h1>
+        <p class="subtitle">Live status Twojego bota z bot-hosting.net</p>
         
         <div class="status-grid">
-            <div class="status-card online">
-                <h3><span class="indicator"></span>Bot Discord</h3>
-                <div class="value">Online ✅</div>
+            <div class="status-card loading" id="botStatus">
+                <div class="status-label">🤖 Bot</div>
+                <div class="status-value">⏳</div>
             </div>
-            <div class="status-card online">
-                <h3><span class="indicator"></span>REST API</h3>
-                <div class="value">Online ✅</div>
-            </div>
-            <div class="status-card online">
-                <h3><span class="indicator"></span>strona.py</h3>
-                <div class="value">Online ✅</div>
-            </div>
-            <div class="status-card online">
-                <h3><span class="indicator"></span>GitHub Pages</h3>
-                <div class="value">Połączona ✅</div>
+            <div class="status-card loading" id="apiStatus">
+                <div class="status-label">📡 API</div>
+                <div class="status-value">⏳</div>
             </div>
         </div>
 
-        <div class="alert">
-            🔗 <strong>GitHub Pages Domena:</strong> {{ github_domain }}
+        <div class="info-box">
+            Backend: <code id="backendInfo">Ładowanie...</code>
+        </div>
+
+        <div class="section">
+            <h2>🏗️ Architektura</h2>
+            <p><strong>Frontend:</strong> GitHub Pages (czwalga.me) ← ty jesteś tutaj</p>
+            <p><strong>Backend:</strong> bot-hosting.net (Bot + API)</p>
+            <p><strong>Bot:</strong> Voice Recording + AI Gemini</p>
         </div>
 
         <div class="section">
             <h2>📡 Dostępne Endpointy</h2>
-            <div class="endpoint">
-                <span class="method">GET</span>/api/health - Status wszystkich systemów
-            </div>
-            <div class="endpoint">
-                <span class="method">GET</span>/api/status - Informacje o serwerze
-            </div>
-            <div class="endpoint">
-                <span class="method">GET</span>/api/recordings - Lista nagrań
-            </div>
-            <div class="endpoint">
-                <span class="method">GET</span>/api/stats - Statystyki bota
-            </div>
+            <p>🔗 <code>/api/health</code> - Status systemu</p>
+            <p>🔗 <code>/api/status</code> - Info serwera</p>
+            <p>🔗 <code>/api/recordings</code> - Lista nagrań</p>
+            <p>🔗 <code>/api/stats</code> - Statystyki bota</p>
         </div>
 
         <div class="section">
-            <h2>🔧 Konfiguracja</h2>
-            <div class="config-box">
-                <strong>Aby podłączyć GitHub Pages:</strong><br><br>
-                1. Upewnij się, że w <code>.env</code> masz:<br>
-                <code style="display: block; margin: 8px 0;">GITHUB_PAGES_DOMAIN=https://czwalga.me</code>
-                <br>
-                2. Lub ustaw zmienną środowiskową na serwerze<br>
-                3. Upewnij się, że CORS jest włączony (już jest! ✅)<br>
-                4. GitHub Pages może teraz wysyłać requesty do API
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>📍 Adresy</h2>
-            <p style="margin: 10px 0; color: #666; font-size: 13px;">
-                <strong>Lokalnie:</strong> http://localhost:5000<br>
-                <strong>GitHub Pages:</strong> {{ github_domain }}<br>
-                <strong>REST API:</strong> http://twój-serwer.com:8080<br>
-                <strong>strona.py:</strong> http://twój-serwer.com:5000
+            <h2>⚙️ Ustawienia</h2>
+            <p style="color: #ef4444; margin-bottom: 10px;">
+                ⚠️ <strong>WAŻNE:</strong> Zmień poniżej adres na swój bot-hosting.net!
+            </p>
+            <p style="background: #fef2f2; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 12px; color: #666;">
+                Szukaj w kodzie: <code>const BACKEND_URL</code>
             </p>
         </div>
 
         <div class="footer">
-            Załadowana: {{ current_time }}<br>
-            Discord Bot API v2.0 • Wszystkie systemy działają ✅
+            Aktualizuje się co 5 sekund • CORS ✅ • GitHub Pages ✅
         </div>
     </div>
+
+    <script>
+        // ⚠️ ⚠️ ⚠️ ZMIEŃ TO NA SWÓJ ADRES bot-hosting.net ⚠️ ⚠️ ⚠️
+        // Np: https://moj-bot.bot-hosting.net
+        // Lub: https://bot.czwalga.me (jeśli masz subdomenę)
+        const BACKEND_URL = 'https://TUTAJ-WPISZ-SWOJ-ADRES-BOT-HOSTING.bot-hosting.net';
+        
+        // Dla testów lokalnych (jeśli chcesz testować lokalnie):
+        // const BACKEND_URL = 'http://localhost:5000';
+
+        async function checkStatus() {
+            try {
+                console.log(`📡 Sprawdzam status: ${BACKEND_URL}/api/health`);
+                
+                const response = await fetch(`${BACKEND_URL}/api/health`, {
+                    method: 'GET',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Bot jest online!', data);
+                    
+                    // Bot online
+                    document.getElementById('botStatus').className = 'status-card online';
+                    document.getElementById('botStatus').innerHTML = `
+                        <div class="status-label">🤖 Bot</div>
+                        <div class="status-value">✅</div>
+                    `;
+                    
+                    // API online
+                    document.getElementById('apiStatus').className = 'status-card online';
+                    document.getElementById('apiStatus').innerHTML = `
+                        <div class="status-label">📡 API</div>
+                        <div class="status-value">✅</div>
+                    `;
+                    
+                    // Wyświetl backend URL
+                    document.getElementById('backendInfo').textContent = BACKEND_URL;
+                } else {
+                    console.warn('⚠️ Bot vrócił status:', response.status);
+                    showError();
+                }
+            } catch (error) {
+                console.error('❌ Błąd połączenia:', error.message);
+                showError();
+            }
+        }
+
+        function showError() {
+            document.getElementById('botStatus').className = 'status-card offline';
+            document.getElementById('botStatus').innerHTML = `
+                <div class="status-label">🤖 Bot</div>
+                <div class="status-value">❌</div>
+            `;
+            
+            document.getElementById('apiStatus').className = 'status-card offline';
+            document.getElementById('apiStatus').innerHTML = `
+                <div class="status-label">📡 API</div>
+                <div class="status-value">❌</div>
+            `;
+            
+            document.getElementById('backendInfo').textContent = 'Niedostępny - sprawdź konfigurację';
+        }
+
+        // Sprawdzaj status na starcie
+        console.log('🌐 GitHub Pages Dashboard załadowana');
+        console.log(`🔗 Backend URL: ${BACKEND_URL}`);
+        checkStatus();
+        
+        // Sprawdzaj co 5 sekund
+        setInterval(checkStatus, 5000);
+    </script>
 </body>
 </html>
-"""
-
-@app.route('/')
-def index():
-    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    return render_template_string(HTML_TEMPLATE, 
-                                 current_time=current_time, 
-                                 github_domain=GITHUB_PAGES_DOMAIN)
-
-@app.route('/api/status')
-def status():
-    return jsonify({
-        'status': 'ok',
-        'service': 'strona.py',
-        'port': 5000,
-        'github_pages': GITHUB_PAGES_DOMAIN,
-        'timestamp': datetime.now().isoformat()
-    })
-
-@app.route('/api/health')
-def health():
-    return jsonify({
-        'status': 'healthy',
-        'bot': 'online',
-        'api': 'online',
-        'github_pages_connected': True,
-        'timestamp': datetime.now().isoformat()
-    })
-
-if __name__ == '__main__':
-    print("=" * 70)
-    print("🌐 Uruchamiam strona.py...")
-    print("=" * 70)
-    print(f"✅ Flask server uruchomiony na porcie 5000!")
-    print(f"📍 Localhost: http://localhost:5000")
-    print(f"🔗 GitHub Pages Domena: {GITHUB_PAGES_DOMAIN}")
-    print(f"📊 API Health: http://localhost:5000/api/health")
-    print(f"📊 API Status: http://localhost:5000/api/status")
-    print("=" * 70)
-    print("\n💡 Aby GitHub Pages komunikować się z API:")
-    print("   - Ustaw zmienną GITHUB_PAGES_DOMAIN w .env")
-    print("   - CORS jest już włączony")
-    print("   - Możesz wysyłać requesty z GitHub Pages!\n")
-    
-    app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False, threaded=True)
